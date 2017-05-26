@@ -32,9 +32,9 @@ def catagory(html):
 
     fout.write("<properties>\n")
     for i in range(0, len(baseNameList)):
-        fout.write("<" + baseNameList[i].get_text() + ">")
+        fout.write("<" + baseNameList[i].get_text().replace(" ", "") + ">")
         fout.write(baseValueList[i].get_text().replace("\n", ""))   # 去掉value中自带的回车
-        fout.write("</" + baseNameList[i].get_text() + ">\n")
+        fout.write("</" + baseNameList[i].get_text().replace(" ", "") + ">\n")
     fout.write("</properties>\n")
     # -------基本信息，作为疾病的属性 end-------------------
 
@@ -46,7 +46,7 @@ def catagory(html):
     nodeList = soup.select('.title-text span')
     for node in nodeList:
         # 名称，如病因，治疗等等（开始标签）
-        fout.write("<" + node.nextSibling + ">\n")
+        fout.write("<" + node.nextSibling.replace(" ", "") + ">\n")
 
         value = node.parent.parent.next_sibling.next_sibling
         TYPEOFTAG = value     # 用于后面判断类型，暂时没想到更好的办法
@@ -90,12 +90,12 @@ def catagory(html):
                             if text[0:1] == "（":
                                 #if stackFlag.pop(-1) == 0:
                                     #fout.write(value.next_sibling.next_sibling.get_text())
-                                fout.write("</" + text[3:] + ">\n")
+                                fout.write("</" + text[3:].replace(" ", "") + ">\n")
                             else:
                                 #if stackFlag.pop(-1) == 0:
                                     #fout.write(value.next_sibling.next_sibling.get_text())
-                                fout.write("</" + text[2:] + ">\n")
-                        fout.write("<" + value.select('b')[0].get_text()[3:] + ">\n")
+                                fout.write("</" + text[2:].replace(" ", "") + ">\n")
+                        fout.write("<" + value.select('b')[0].get_text()[3:].replace(" ", "") + ">\n")
                         stack.append(value.select('b')[0].get_text())
 
 
@@ -108,16 +108,42 @@ def catagory(html):
                             else:
                                 #if stackFlag.pop(-1) == 0:
                                     #fout.write(value.next_sibling.next_sibling.get_text())
-                                fout.write("</" + stack.pop(-1)[2:] + ">\n")
-                        fout.write("<" + value.select('b')[0].get_text()[2:] + ">\n")
+                                fout.write("</" + stack.pop(-1)[2:].replace(" ", "") + ">\n")
+                        fout.write("<" + value.select('b')[0].get_text()[2:].replace(" ", "") + ">\n")
+
+                        # ------如果下面没有类似小标题(1)：直接输出内容---------
+                        cur = value.next_sibling
+                        i = 0
+                        while (1):
+                            if (type(cur) == type(TYPEOFTAG)):
+                                if (not cur.has_attr('class') or cur['class'][0] != 'para'):
+                                    break
+                                if (len(cur.select('b')) > 0) and (cur.select('b')[0].get_text()[1:2] == "." or cur.select('b')[0].get_text()[1:2] == "．" or cur.select('b')[0].get_text()[0:3] in h1):
+                                    break
+                                if (len(cur.select('b')) > 0) and cur.select('b')[0].get_text()[0:3] in h3:
+                                    i = i + 1
+                            cur = cur.next_sibling
+                        if i == 0:
+                            cur = value.next_sibling
+                            while (1):
+                                if (type(cur) == type(TYPEOFTAG)):
+                                    if (not cur.has_attr('class') or cur['class'][0] != 'para'):
+                                        break
+                                    if (len(cur.select('b')) > 0) and (cur.select('b')[0].get_text()[1:2] == "." or cur.select('b')[0].get_text()[1:2] == "．" or cur.select('b')[0].get_text()[0:3] in h1):
+                                        break
+                                    else:
+                                        fout.write(cur.get_text())
+                                cur = cur.next_sibling
+                            fout.write("\n")
+                        # --------------------end---------------------------
                         stack.append(value.select('b')[0].get_text())
 
 
                     # 型如（1）这种形式，没有更低级的元素，不用入栈
                     elif value.select('b')[0].get_text()[0:3] in h3:
-                        fout.write("<" + value.select('b')[0].get_text()[3:] + ">")
+                        fout.write("<" + value.select('b')[0].get_text()[3:].replace(" ", "") + ">")
                         fout.write(value.get_text()[len(value.select('b')[0].get_text()):])
-                        fout.write("</" + value.select('b')[0].get_text()[3:] + ">\n")
+                        fout.write("</" + value.select('b')[0].get_text()[3:].replace(" ", "") + ">\n")
 
             value = value.next_sibling
 
@@ -125,12 +151,12 @@ def catagory(html):
         while len(stack) > 0:
             text = stack.pop(-1)
             if text[0:1] == "（":
-                fout.write("</" + text[3:] + ">\n")
+                fout.write("</" + text[3:].replace(" ", "") + ">\n")
             else:
-                fout.write("</" + text[2:] + ">\n")
+                fout.write("</" + text[2:].replace(" ", "") + ">\n")
 
         # 名称（结束标签）
-        fout.write("</" + node.nextSibling + ">\n")
+        fout.write("</" + node.nextSibling.replace(" ", "") + ">\n")
     # ------具体的详细内容则按照新的实体处理 end ------------
 
 
